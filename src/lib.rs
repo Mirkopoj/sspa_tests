@@ -705,6 +705,11 @@ mod tests {
         dac_clear();
         powen_on();
         sleep(Duration::from_millis(WAIT_CLEAR));
+        let status_reg = enviar(0x3C000000);
+        let alarm_val = status_reg&REG_TAB[reg].alarma;
+        let sspa_active = status_reg&0x4000;
+        println!("Status: {:016b} (pre)", status_reg);
+        println!("sspa_active: {:#04X}, alarm_val: {:#04X} (pre)", sspa_active, alarm_val);
         let trh_val = (enviar(0x3C000000+(REG_TAB[reg].trh<<16))&0x7FFF).clamp(0, 1023) as u32;
         let ret_val = enviar(0x2A000000+dac_val+(REG_TAB[reg].dac<<16)) as u32;
         assert_eq!(ret_val, dac_val);
@@ -720,6 +725,8 @@ mod tests {
         let status_reg = enviar(0x3C000000);
         let alarm_val = status_reg&REG_TAB[reg].alarma;
         let sspa_active = status_reg&0x4000;
+        println!("Status: {:016b}", status_reg);
+        println!("sspa_active: {:#04X}, alarm_val: {:#04X}", sspa_active, alarm_val);
         dac_clear();
         powen_off();
         sleep(Duration::from_millis(WAIT_DAC));
@@ -732,6 +739,8 @@ mod tests {
         let ctrl = enviar(0x3C010000) as u32;
         let ctrl = (ctrl | REG_TAB[reg].disable)&0x7FFF;
         enviar(0x25010000+ctrl);
+        let ctrl = enviar(0x3C010000);
+        println!("Ctrl: {:016b}", ctrl);
     }
 
     fn protect_enable(reg: usize){
@@ -1722,5 +1731,63 @@ mod tests {
         sleep(Duration::from_millis(WAIT_CLEAR));
         assert_ne!(ret_val, 0);
     }
-}
 
+    #[test]
+    fn tnr_nunca_baja_secuencia_correcta_disabled(){
+        initial_conection();
+        let ctrl = enviar(0x3C010000) as u32;
+        let ctrl = (ctrl | 4)&0x7FFF;
+        enviar(0x25010000+ctrl);
+        tnr_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        powen_on();
+        sleep(Duration::from_millis(WAIT_MILLIS));
+        alarm_reset();
+        let mut cont = 0;
+        tnr_set(800, 800, 0, 0, 0);
+        for _ in 0..5 {
+            sleep(Duration::from_millis(WAIT_TNR/5));
+            cont += enviar(0x4D010000);
+        }
+        //Ver que si esté la alarma
+        let ret_val = enviar(0x3C000000)&0x4;
+        tnr_clear();
+        let ctrl = enviar(0x3C010000) as u32;
+        let ctrl = (ctrl & !4)&0x7FFF;
+        enviar(0x25010000+ctrl);
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        assert_ne!(ret_val, 0);
+        assert_eq!(cont, 5);
+    }
+
+    #[test]
+    fn fresh_boot_tnr_nunca_baja_secuencia_correcta_disabled(){
+        initial_conection();
+        tnr_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        powen_on();
+        sleep(Duration::from_millis(WAIT_MILLIS));
+        relay_off();
+        relay_on();
+        let ctrl = enviar(0x3C010000) as u32;
+        let ctrl = (ctrl | 4)&0x7FFF;
+        enviar(0x25010000+ctrl);
+        alarm_reset();
+        let mut cont = 0;
+        tnr_set(800, 800, 0, 0, 0);
+        for _ in 0..5 {
+            sleep(Duration::from_millis(WAIT_TNR/5));
+            cont += enviar(0x4D010000);
+        }
+        //Ver que si esté la alarma
+        let ret_val = enviar(0x3C000000)&0x4;
+        tnr_clear();
+        let ctrl = enviar(0x3C010000) as u32;
+        let ctrl = (ctrl & !4)&0x7FFF;
+        enviar(0x25010000+ctrl);
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        assert_ne!(ret_val, 0);
+        assert_eq!(cont, 5);
+    }
+
+}

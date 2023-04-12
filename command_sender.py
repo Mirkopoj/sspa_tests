@@ -59,6 +59,8 @@ def rampa_dac(addr):
     for i in range(0,1023):
         dac(addr,i)
         time.sleep(0.001)
+def sspa_reset():
+    send_command(0x25010040)
 
 leer_registros()
 
@@ -77,6 +79,7 @@ program(0)
 program(1)
 
 alarm_reset()
+sspa_reset()
 
 dacs_cero()
 dac(0, 1023)
