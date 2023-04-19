@@ -770,7 +770,7 @@ mod tests {
     #[test]
     fn refpow_protection(){
         initial_conection();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(1, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(1, 1023);
         assert_ne!(alarm_val, 0);
         assert_eq!(tnr_rise_count, 0);
     }
@@ -778,7 +778,7 @@ mod tests {
     #[test]
     fn refpow_no_protection(){
         initial_conection();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(1, 0, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(1, 0);
         assert_eq!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
     }
@@ -788,7 +788,7 @@ mod tests {
         initial_conection();
         relay_off();
         relay_on();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(1, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(1, 1023);
         assert_ne!(alarm_val, 0);
         assert_eq!(tnr_rise_count, 0);
     }
@@ -798,7 +798,7 @@ mod tests {
         initial_conection();
         relay_off();
         relay_on();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(1, 0, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(1, 0);
         assert_eq!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
     }
@@ -807,7 +807,7 @@ mod tests {
     fn refpow_protection_disabled(){
         initial_conection();
         protect_disable(1);
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(1, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(1, 1023);
         protect_enable(1);
         assert_ne!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
@@ -819,7 +819,7 @@ mod tests {
         relay_off();
         relay_on();
         protect_disable(1);
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(1, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(1, 1023);
         protect_enable(1);
         assert_ne!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
@@ -828,7 +828,7 @@ mod tests {
     #[test]
     fn overdrive_protection(){
         initial_conection();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(3, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(3, 1023);
         assert_ne!(alarm_val, 0);
         assert_eq!(tnr_rise_count, 0);
     }
@@ -836,7 +836,7 @@ mod tests {
     #[test]
     fn overdrive_no_protection(){
         initial_conection();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(3, 0, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(3, 0);
         assert_eq!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
     }
@@ -846,7 +846,7 @@ mod tests {
         initial_conection();
         relay_off();
         relay_on();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(3, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(3, 1023);
         assert_ne!(alarm_val, 0);
         assert_eq!(tnr_rise_count, 0);
     }
@@ -856,7 +856,7 @@ mod tests {
         initial_conection();
         relay_off();
         relay_on();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(3, 0, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(3, 0);
         assert_eq!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
     }
@@ -865,7 +865,7 @@ mod tests {
     fn overdrive_protection_disabled(){
         initial_conection();
         protect_disable(3);
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(3, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(3, 1023);
         protect_enable(3);
         assert_ne!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
@@ -877,7 +877,7 @@ mod tests {
         relay_off();
         relay_on();
         protect_disable(3);
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(3, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(3, 1023);
         protect_enable(3);
         assert_ne!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
@@ -886,7 +886,7 @@ mod tests {
     #[test]
     fn gan1curr_protection(){
         initial_conection();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(5, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(5, 1023);
         assert_ne!(alarm_val, 0);
         assert_eq!(tnr_rise_count, 0);
     }
@@ -894,7 +894,7 @@ mod tests {
     #[test]
     fn gan1curr_no_protection(){
         initial_conection();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(5, 0, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(5, 0);
         assert_eq!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
     }
@@ -904,7 +904,7 @@ mod tests {
         initial_conection();
         relay_off();
         relay_on();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(5, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(5, 1023);
         assert_ne!(alarm_val, 0);
         assert_eq!(tnr_rise_count, 0);
     }
@@ -914,7 +914,7 @@ mod tests {
         initial_conection();
         relay_off();
         relay_on();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(5, 0, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(5, 0);
         assert_eq!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
     }
@@ -923,7 +923,7 @@ mod tests {
     fn gan1curr_protection_disabled(){
         initial_conection();
         protect_disable(5);
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(5, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(5, 1023);
         protect_enable(5);
         assert_ne!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
@@ -935,7 +935,7 @@ mod tests {
         relay_off();
         relay_on();
         protect_disable(5);
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(5, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(5, 1023);
         protect_enable(5);
         assert_ne!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
@@ -944,7 +944,7 @@ mod tests {
     #[test]
     fn gan2curr_protection(){
         initial_conection();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(6, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(6, 1023);
         assert_ne!(alarm_val, 0);
         assert_eq!(tnr_rise_count, 0);
     }
@@ -952,7 +952,7 @@ mod tests {
     #[test]
     fn gan2curr_no_protection(){
         initial_conection();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(6, 0, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(6, 0);
         assert_eq!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
     }
@@ -962,7 +962,7 @@ mod tests {
         initial_conection();
         relay_off();
         relay_on();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(6, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(6, 1023);
         assert_ne!(alarm_val, 0);
         assert_eq!(tnr_rise_count, 0);
     }
@@ -972,7 +972,7 @@ mod tests {
         initial_conection();
         relay_off();
         relay_on();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(6, 0, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(6, 0);
         assert_eq!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
     }
@@ -981,7 +981,7 @@ mod tests {
     fn gan2curr_protection_disabled(){
         initial_conection();
         protect_disable(6);
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(6, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(6, 1023);
         protect_enable(6);
         assert_ne!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
@@ -993,7 +993,7 @@ mod tests {
         relay_off();
         relay_on();
         protect_disable(6);
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(6, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(6, 1023);
         protect_enable(6);
         assert_ne!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
@@ -1002,7 +1002,7 @@ mod tests {
     #[test]
     fn gan3curr_protection(){
         initial_conection();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(7, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(7, 1023);
         assert_ne!(alarm_val, 0);
         assert_eq!(tnr_rise_count, 0);
     }
@@ -1010,7 +1010,7 @@ mod tests {
     #[test]
     fn gan3curr_no_protection(){
         initial_conection();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(7, 0, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(7, 0);
         assert_eq!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
     }
@@ -1020,7 +1020,7 @@ mod tests {
         initial_conection();
         relay_off();
         relay_on();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(7, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(7, 1023);
         assert_ne!(alarm_val, 0);
         assert_eq!(tnr_rise_count, 0);
     }
@@ -1030,7 +1030,7 @@ mod tests {
         initial_conection();
         relay_off();
         relay_on();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(7, 0, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(7, 0);
         assert_eq!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
     }
@@ -1039,7 +1039,7 @@ mod tests {
     fn gan3curr_protection_disabled(){
         initial_conection();
         protect_disable(7);
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(7, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(7, 1023);
         protect_enable(7);
         assert_ne!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
@@ -1051,7 +1051,7 @@ mod tests {
         relay_off();
         relay_on();
         protect_disable(7);
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(7, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(7, 1023);
         protect_enable(7);
         assert_ne!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
@@ -1060,7 +1060,7 @@ mod tests {
     #[test]
     fn gan4curr_protection(){
         initial_conection();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(8, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(8, 1023);
         assert_ne!(alarm_val, 0);
         assert_eq!(tnr_rise_count, 0);
     }
@@ -1068,7 +1068,7 @@ mod tests {
     #[test]
     fn gan4curr_no_protection(){
         initial_conection();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(8, 0, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(8, 0);
         assert_eq!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
     }
@@ -1078,7 +1078,7 @@ mod tests {
         initial_conection();
         relay_off();
         relay_on();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(8, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(8, 1023);
         assert_ne!(alarm_val, 0);
         assert_eq!(tnr_rise_count, 0);
     }
@@ -1088,7 +1088,7 @@ mod tests {
         initial_conection();
         relay_off();
         relay_on();
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(8, 0, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(8, 0);
         assert_eq!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
     }
@@ -1097,7 +1097,7 @@ mod tests {
     fn gan4curr_protection_disabled(){
         initial_conection();
         protect_disable(8);
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(8, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(8, 1023);
         protect_enable(8);
         assert_ne!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
@@ -1109,7 +1109,7 @@ mod tests {
         relay_off();
         relay_on();
         protect_disable(8);
-        let (tnr_rise_count, alarm_val) = tnr_block_protection_core(8, 1023, false);
+        let (tnr_rise_count, alarm_val) = disable_protection_core(8, 1023);
         protect_enable(8);
         assert_ne!(alarm_val, 0);
         assert_ne!(tnr_rise_count, 0);
