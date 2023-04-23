@@ -6,6 +6,7 @@ mod tests {
     const WAIT_DAC: u64 = 1500;
     const WAIT_RELAY: u64 = 1000;
     const WAIT_RESET: u64 = 2000;
+    const WAIT_SSPA_RESET: u64 = 2000;
     const WAIT_TNR: u64 = 5000;
     const THRESHOLE_HIGH: u32 = 700;
     const THRESHOLE_LOW: u32 = 300;
@@ -16,7 +17,7 @@ mod tests {
     use std::time::Duration;
 
     static mut STREAM: Option<TcpStream> = None;
-
+    
     fn initial_conection() {
         unsafe {
             if STREAM.is_some() { return; }
@@ -145,19 +146,20 @@ mod tests {
         alarma: u16,
         value: u32,
         dac: u32,
-        disable: u32
+        disable: u32,
+        adc_offset: u32,
     }
 
     const REG_TAB: [AnalogSig;9] = [
-        AnalogSig{trh: 0x11, alarma: 0x20, value: 2, dac: 2, disable: 0x00}, //Output Power
-        AnalogSig{trh: 0x12, alarma: 0x40, value: 3, dac: 0, disable: 0x10}, //Reflected Power
-        AnalogSig{trh: 0x10, alarma: 0x10, value: 4, dac: 1, disable: 0x00}, //Underdrive
-        AnalogSig{trh: 0x0F, alarma: 0x08, value: 4, dac: 1, disable: 0x08}, //Overdrive
-        AnalogSig{trh: 0x0A, alarma: 0x02, value: 5, dac: 7, disable: 0x02}, //Temperature
-        AnalogSig{trh: 0x0C, alarma: 0x01, value: 6, dac: 3, disable: 0x01}, //Gan1 Current
-        AnalogSig{trh: 0x0C, alarma: 0x01, value: 7, dac: 4, disable: 0x01}, //Gan2 Current
-        AnalogSig{trh: 0x0C, alarma: 0x01, value: 8, dac: 5, disable: 0x01}, //Gan3 Current
-        AnalogSig{trh: 0x0C, alarma: 0x01, value: 9, dac: 6, disable: 0x01}, //Gan4 Current
+        AnalogSig{trh: 0x11, alarma: 0x20, value: 2, dac: 2, disable: 0x00, adc_offset: 0x670000}, //Output Power
+        AnalogSig{trh: 0x12, alarma: 0x40, value: 3, dac: 0, disable: 0x10, adc_offset: 0x650000}, //Reflected Power
+        AnalogSig{trh: 0x10, alarma: 0x10, value: 4, dac: 1, disable: 0x00, adc_offset: 0x660000}, //Underdrive
+        AnalogSig{trh: 0x0F, alarma: 0x08, value: 4, dac: 1, disable: 0x08, adc_offset: 0x660000}, //Overdrive
+        AnalogSig{trh: 0x0A, alarma: 0x02, value: 5, dac: 7, disable: 0x02, adc_offset: 0x6C0000}, //Temperature
+        AnalogSig{trh: 0x0C, alarma: 0x01, value: 6, dac: 3, disable: 0x01, adc_offset: 0x680000}, //Gan1 Current
+        AnalogSig{trh: 0x0C, alarma: 0x01, value: 7, dac: 4, disable: 0x01, adc_offset: 0x690000}, //Gan2 Current
+        AnalogSig{trh: 0x0C, alarma: 0x01, value: 8, dac: 5, disable: 0x01, adc_offset: 0x6A0000}, //Gan3 Current
+        AnalogSig{trh: 0x0C, alarma: 0x01, value: 9, dac: 6, disable: 0x01, adc_offset: 0x6B0000}, //Gan4 Current
     ];
 
     fn adc_alarm_a(reg: usize, dac_val: u32, trg_if: &str){
@@ -700,7 +702,7 @@ mod tests {
         let ctrl = (ctrl|0x0080)&0x7FFF;
         enviar(0x25010000+ctrl);
         let status_pre = enviar(0x3C000000)&0x4000;
-        sleep(Duration::from_millis(WAIT_RESET));
+        sleep(Duration::from_millis(WAIT_SSPA_RESET));
         let status_mid = enviar(0x3C000000)&0x4000;
         sspa_reset();
         let status_post = enviar(0x3C000000)&0x4000;
@@ -714,7 +716,7 @@ mod tests {
         let ctrl = enviar(0x3C010000) as u32;
         let ctrl = (ctrl|0x0040)&0x7FFF;
         enviar(0x25010000+ctrl);
-        sleep(Duration::from_millis(WAIT_RESET));
+        sleep(Duration::from_millis(WAIT_SSPA_RESET));
     }
 
     #[allow(unused)]
@@ -1864,6 +1866,739 @@ mod tests {
         sleep(Duration::from_millis(WAIT_CLEAR));
         assert_ne!(ret_val, 0);
         assert_eq!(cont, 5);
+    }
+
+    fn registro_fantasma_offset_core(reg: usize, offset: i16) -> (u16, u16) {
+        let offset = (offset.clamp(-2048, 2047) as u32) & 0xFFF;
+        let ret = enviar(0x25000000+offset+REG_TAB[reg].adc_offset) & 0x7FFF;
+        sleep(Duration::from_millis(WAIT_DAC));
+        let adc = enviar(0x3C000000+(REG_TAB[reg].value<<16)) & 0x7FFF;
+        (ret, adc)
+    }
+
+    fn offset_clear(reg: usize) {
+        let ret = enviar(0x25000000+REG_TAB[reg].adc_offset);
+        assert_eq!(ret, 0);
+    }
+
+    #[test]
+    fn refpow_offset_no_clamp(){
+        let reg = 1;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn refpow_offset_calmp_min(){
+        let reg = 1;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn refpow_offset_calmp_max(){
+        let reg = 1;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_refpow_offset_no_clamp(){
+        let reg = 1;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_refpow_offset_calmp_min(){
+        let reg = 1;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_refpow_offset_calmp_max(){
+        let reg = 1;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn inputpow_offset_no_clamp(){
+        let reg = 2;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn inputpow_offset_calmp_min(){
+        let reg = 2;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn inputpow_offset_calmp_max(){
+        let reg = 2;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_inputpow_offset_no_clamp(){
+        let reg = 2;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_inputpow_offset_calmp_min(){
+        let reg = 2;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_inputpow_offset_calmp_max(){
+        let reg = 2;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn outputpow_offset_no_clamp(){
+        let reg = 0;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn outputpow_offset_calmp_min(){
+        let reg = 0;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn outputpow_offset_calmp_max(){
+        let reg = 0;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_outputpow_offset_no_clamp(){
+        let reg = 0;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_outputpow_offset_calmp_min(){
+        let reg = 0;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_outputpow_offset_calmp_max(){
+        let reg = 0;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan1curr_offset_no_clamp(){
+        let reg = 6;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan1curr_offset_calmp_min(){
+        let reg = 5;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan1curr_offset_calmp_max(){
+        let reg = 5;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_gan1curr_offset_no_clamp(){
+        let reg = 5;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_gan1curr_offset_calmp_min(){
+        let reg = 5;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_gan1curr_offset_calmp_max(){
+        let reg = 5;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan2curr_offset_no_clamp(){
+        let reg = 6;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan2curr_offset_calmp_min(){
+        let reg = 6;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan2curr_offset_calmp_max(){
+        let reg = 6;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_gan2curr_offset_no_clamp(){
+        let reg = 6;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_gan2curr_offset_calmp_min(){
+        let reg = 6;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_gan2curr_offset_calmp_max(){
+        let reg = 6;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan3curr_offset_no_clamp(){
+        let reg = 7;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan3curr_offset_calmp_min(){
+        let reg = 7;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan3curr_offset_calmp_max(){
+        let reg = 7;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_gan3curr_offset_no_clamp(){
+        let reg = 7;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_gan3curr_offset_calmp_min(){
+        let reg = 7;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_gan3curr_offset_calmp_max(){
+        let reg = 7;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan4curr_offset_no_clamp(){
+        let reg = 8;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan4curr_offset_calmp_min(){
+        let reg = 8;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan4curr_offset_calmp_max(){
+        let reg = 8;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_gan4curr_offset_no_clamp(){
+        let reg = 8;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_gan4curr_offset_calmp_min(){
+        let reg = 8;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_gan4curr_offset_calmp_max(){
+        let reg = 8;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn temp_offset_no_clamp(){
+        let reg = 4;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn temp_offset_calmp_min(){
+        let reg = 4;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn temp_offset_calmp_max(){
+        let reg = 4;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_temp_offset_no_clamp(){
+        let reg = 4;
+        let offset = 100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, offset);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_temp_offset_calmp_min(){
+        let reg = 4;
+        let offset = -100;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn fresh_boot_temp_offset_calmp_max(){
+        let reg = 4;
+        let offset = 2000;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        relay_off();
+        relay_on();
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
     }
 
 }

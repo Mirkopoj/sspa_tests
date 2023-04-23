@@ -61,16 +61,15 @@ def rampa_dac(addr):
         time.sleep(0.001)
 def sspa_reset():
     send_command(0x25010040)
-
-def which_alarm():
-    stat = send_command(0x3C130000)
-    valor = stat & 0x03FF
-    alarma = (stat&0x7FFF)>>10
-    print("alarma: ", alarma, ", valor: ", valor)
+def offset(reg, val):
+    send_command(0x25640000+(reg<<16)+(val&0xFFF))
+def store_to_non_volatile():
+    send_command(0x25010200)
+def load_from_non_volatile():
+    send_command(0x25010100)
 
 alarm_reset()
 leer_registros()
-which_alarm()
 
 gen_tnr(3000, 250, 4, 4, 0)
 gen_tnr(3000, 180, 4, 4, 0)
@@ -78,8 +77,17 @@ gen_tnr(1500, 250, 4, 4, 0)
 gen_tnr(800, 250, 4, 4, 1)
 gen_tnr(800, 800, 0, 0, 0)
 
-send_command(0x25010001)
-send_command(0x25640258)
+store_to_non_volatile()
+load_from_non_volatile()
+
+offset(1,0)
+offset(2,0)
+offset(3,0)
+offset(4,0)
+offset(5,0)
+offset(6,0)
+offset(7,0)
+offset(8,0)
 
 powen(0)
 powen(1)
@@ -93,8 +101,8 @@ program(1)
 sspa_reset()
 
 dacs_cero()
-dac(4, 1023)
-dac(1, 511)
+dac(0, 1023)
+dac(1, 1023)
 dac(2, 511)
 dac(0, 0)
 
