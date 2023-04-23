@@ -1,0 +1,555 @@
+
+test tests::gan1curr_protection ... [31mFAILED(B[m
+test tests::refpow_protection_disabled ... [31mFAILED(B[m
+
+failures:
+
+---- tests::gan1curr_protection stdout ----
+Status: 0100000000110001 (pre)
+sspa_active: 0x4000, alarm_val: 0x01 (pre)
+Measured level = 1018, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 0100000000110001
+sspa_active: 0x4000, alarm_val: 0x01
+thread 'tests::gan1curr_protection' panicked at 'assertion failed: `(left == right)`
+  left: `16384`,
+ right: `0`', src/lib.rs:896:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::refpow_protection_disabled stdout ----
+Ctrl: 1000000000010000
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1016, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 0111111110110000
+sspa_active: 0x4000, alarm_val: 0x00
+thread 'tests::refpow_protection_disabled' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:817:9
+
+failures:
+    tests::gan1curr_protection
+    tests::refpow_protection_disabled
+
+test result: [31mFAILED(B[m. 88 passed; 3 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.85s
+
+
+test tests::overdrive_no_protection ... [31mFAILED(B[m
+test tests::refpow_protection ... [31mFAILED(B[m
+
+failures:
+
+---- tests::overdrive_no_protection stdout ----
+Status: 1000000000111000 (pre)
+sspa_active: 0x00, alarm_val: 0x08 (pre)
+Measured level = 0, Dac value = 0, Threshole level = 700, Triggered if higher
+Status: 0000000000110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::overdrive_no_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:846:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::refpow_protection stdout ----
+Status: 0000000000110000 (pre)
+sspa_active: 0x00, alarm_val: 0x00 (pre)
+Measured level = 1014, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 1011111110110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::refpow_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:779:9
+
+failures:
+    tests::overdrive_no_protection
+    tests::refpow_protection
+
+test result: [31mFAILED(B[m. 88 passed; 3 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.82s
+
+
+failures:
+
+---- tests::adc_reflectedpower_alarm_a stdout ----
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+thread 'tests::adc_reflectedpower_alarm_a' panicked at 'assertion failed: `(left == right)`
+  left: `0`,
+ right: `64`', src/lib.rs:184:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'tests::tnr_nunca_baja_secuencia_correcta' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:1561:9
+
+---- tests::tnr_nunca_baja_secuencia_correcta_disabled stdout ----
+thread 'tests::tnr_nunca_baja_secuencia_correcta_disabled' panicked at 'assertion failed: `(left == right)`
+  left: `4`,
+ right: `5`', src/lib.rs:1841:9
+
+
+failures:
+    tests::adc_reflectedpower_alarm_a
+    tests::tnr_nunca_baja_secuencia_correcta
+    tests::tnr_nunca_baja_secuencia_correcta_disabled
+
+test result: [31mFAILED(B[m. 88 passed; 3 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.59s
+
+
+test tests::refpow_protection ... [31mFAILED(B[m
+test tests::refpow_protection_disabled ... [31mFAILED(B[m
+test tests::tnr_secuencia_invertida ... [31mFAILED(B[m
+
+failures:
+
+---- tests::refpow_protection stdout ----
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 1011111110110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::refpow_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:779:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::refpow_protection_disabled stdout ----
+Ctrl: 1000000000010000
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1016, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 0111111110110000
+sspa_active: 0x4000, alarm_val: 0x00
+thread 'tests::refpow_protection_disabled' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:817:9
+
+---- tests::tnr_secuencia_invertida stdout ----
+thread 'tests::tnr_secuencia_invertida' panicked at 'assertion failed: `(left == right)`
+  left: `4`,
+ right: `0`', src/lib.rs:1412:9
+
+
+failures:
+    tests::refpow_protection
+    tests::refpow_protection_disabled
+    tests::tnr_secuencia_invertida
+
+test result: [31mFAILED(B[m. 87 passed; 4 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.84s
+
+
+test tests::adc_reflectedpower_alarm_b ... [31mFAILED(B[m
+test tests::refpow_protection ... [31mFAILED(B[m
+
+failures:
+
+---- tests::adc_reflectedpower_alarm_b stdout ----
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+thread 'tests::adc_reflectedpower_alarm_b' panicked at 'assertion failed: `(left == right)`
+  left: `0`,
+ right: `64`', src/lib.rs:212:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::refpow_protection stdout ----
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 1011111110110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::refpow_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:779:9
+
+failures:
+    tests::adc_reflectedpower_alarm_b
+    tests::refpow_protection
+
+test result: [31mFAILED(B[m. 88 passed; 3 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.72s
+
+
+test tests::tnr_secuencia_invertida ... [31mFAILED(B[m
+
+failures:
+
+---- tests::tnr_secuencia_invertida stdout ----
+thread 'tests::tnr_secuencia_invertida' panicked at 'assertion failed: `(left == right)`
+  left: `4`,
+ right: `0`', src/lib.rs:1412:9
+
+
+failures:
+    tests::tnr_secuencia_invertida
+
+test result: [31mFAILED(B[m. 89 passed; 2 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.97s
+
+
+test tests::refpow_protection ... [31mFAILED(B[m
+test tests::refpow_protection_disabled ... [31mFAILED(B[m
+
+failures:
+
+---- tests::refpow_protection stdout ----
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 1011111110110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::refpow_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:779:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::refpow_protection_disabled stdout ----
+Ctrl: 1000000000010000
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 0111111110110000
+sspa_active: 0x4000, alarm_val: 0x00
+thread 'tests::refpow_protection_disabled' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:817:9
+
+failures:
+    tests::refpow_protection
+    tests::refpow_protection_disabled
+
+test result: [31mFAILED(B[m. 88 passed; 3 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.97s
+
+
+test tests::refpow_protection_disabled ... [31mFAILED(B[m
+
+failures:
+
+---- tests::refpow_protection_disabled stdout ----
+Ctrl: 1000000000010000
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1016, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 0111111110110000
+sspa_active: 0x4000, alarm_val: 0x00
+thread 'tests::refpow_protection_disabled' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:817:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+failures:
+    tests::refpow_protection_disabled
+
+test result: [31mFAILED(B[m. 89 passed; 2 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.82s
+
+
+test tests::adc_reflectedpower_alarm_b ... [31mFAILED(B[m
+
+failures:
+
+---- tests::adc_reflectedpower_alarm_b stdout ----
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+thread 'tests::adc_reflectedpower_alarm_b' panicked at 'assertion failed: `(left == right)`
+  left: `0`,
+ right: `64`', src/lib.rs:212:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+failures:
+    tests::adc_reflectedpower_alarm_b
+
+test result: [31mFAILED(B[m. 89 passed; 2 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.65s
+
+
+test tests::refpow_protection ... [31mFAILED(B[m
+
+failures:
+
+---- tests::refpow_protection stdout ----
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1014, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 1011111110110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::refpow_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:779:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+failures:
+    tests::refpow_protection
+
+test result: [31mFAILED(B[m. 89 passed; 2 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.98s
+
+
+test tests::adc_reflectedpower_alarm_b ... [31mFAILED(B[m
+test tests::overdrive_no_protection ... [31mFAILED(B[m
+test tests::refpow_protection ... [31mFAILED(B[m
+
+failures:
+
+---- tests::adc_reflectedpower_alarm_b stdout ----
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+thread 'tests::adc_reflectedpower_alarm_b' panicked at 'assertion failed: `(left == right)`
+  left: `0`,
+ right: `64`', src/lib.rs:212:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::overdrive_no_protection stdout ----
+Status: 1000000000111000 (pre)
+sspa_active: 0x00, alarm_val: 0x08 (pre)
+Measured level = 0, Dac value = 0, Threshole level = 700, Triggered if higher
+Status: 0000000000110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::overdrive_no_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:846:9
+
+---- tests::refpow_protection stdout ----
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 1011111110110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::refpow_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:779:9
+
+failures:
+    tests::adc_reflectedpower_alarm_b
+    tests::overdrive_no_protection
+    tests::refpow_protection
+
+test result: [31mFAILED(B[m. 87 passed; 4 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.65s
+
+
+test tests::adc_reflectedpower_alarm_a ... [31mFAILED(B[m
+test tests::adc_reflectedpower_alarm_b ... [31mFAILED(B[m
+
+failures:
+
+---- tests::adc_reflectedpower_alarm_a stdout ----
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+thread 'tests::adc_reflectedpower_alarm_a' panicked at 'assertion failed: `(left == right)`
+  left: `0`,
+ right: `64`', src/lib.rs:184:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::adc_reflectedpower_alarm_b stdout ----
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+thread 'tests::adc_reflectedpower_alarm_b' panicked at 'assertion failed: `(left == right)`
+  left: `0`,
+ right: `64`', src/lib.rs:212:9
+
+failures:
+    tests::adc_reflectedpower_alarm_a
+    tests::adc_reflectedpower_alarm_b
+
+test result: [31mFAILED(B[m. 88 passed; 3 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.56s
+
+
+test tests::adc_reflectedpower_alarm_a ... [31mFAILED(B[m
+test tests::overdrive_no_protection ... [31mFAILED(B[m
+test tests::refpow_protection_disabled ... [31mFAILED(B[m
+
+failures:
+
+---- tests::adc_reflectedpower_alarm_a stdout ----
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+thread 'tests::adc_reflectedpower_alarm_a' panicked at 'assertion failed: `(left == right)`
+  left: `0`,
+ right: `64`', src/lib.rs:184:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::overdrive_no_protection stdout ----
+Status: 1000000000111000 (pre)
+sspa_active: 0x00, alarm_val: 0x08 (pre)
+Measured level = 0, Dac value = 0, Threshole level = 700, Triggered if higher
+Status: 0000000000110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::overdrive_no_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:846:9
+
+---- tests::refpow_protection_disabled stdout ----
+Ctrl: 1000000000010000
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1016, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 0111111110110000
+sspa_active: 0x4000, alarm_val: 0x00
+thread 'tests::refpow_protection_disabled' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:817:9
+
+failures:
+    tests::adc_reflectedpower_alarm_a
+    tests::overdrive_no_protection
+    tests::refpow_protection_disabled
+
+test result: [31mFAILED(B[m. 87 passed; 4 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.67s
+
+
+test tests::overdrive_no_protection ... [31mFAILED(B[m
+
+failures:
+
+---- tests::overdrive_no_protection stdout ----
+Status: 1000000000111000 (pre)
+sspa_active: 0x00, alarm_val: 0x08 (pre)
+Measured level = 0, Dac value = 0, Threshole level = 700, Triggered if higher
+Status: 0000000000110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::overdrive_no_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:846:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+failures:
+    tests::overdrive_no_protection
+
+test result: [31mFAILED(B[m. 89 passed; 2 failed; 7 ignored; 0 measured; 87 filtered out; finished in 144.04s
+
+
+test tests::refpow_protection ... [31mFAILED(B[m
+test tests::refpow_protection_disabled ... [31mFAILED(B[m
+
+failures:
+
+---- tests::refpow_protection stdout ----
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 1011111110110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::refpow_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:779:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::refpow_protection_disabled stdout ----
+Ctrl: 1000000000010000
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1016, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 0111111110110000
+sspa_active: 0x4000, alarm_val: 0x00
+thread 'tests::refpow_protection_disabled' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:817:9
+
+failures:
+    tests::refpow_protection
+    tests::refpow_protection_disabled
+
+test result: [31mFAILED(B[m. 88 passed; 3 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.87s
+
+
+test tests::refpow_protection ... [31mFAILED(B[m
+
+failures:
+
+---- tests::refpow_protection stdout ----
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 1011111110110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::refpow_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:779:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+failures:
+    tests::refpow_protection
+
+test result: [31mFAILED(B[m. 89 passed; 2 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.90s
+
+
+test tests::adc_reflectedpower_alarm_b ... [31mFAILED(B[m
+
+failures:
+
+---- tests::adc_reflectedpower_alarm_b stdout ----
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+thread 'tests::adc_reflectedpower_alarm_b' panicked at 'assertion failed: `(left == right)`
+  left: `0`,
+ right: `64`', src/lib.rs:212:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+failures:
+    tests::adc_reflectedpower_alarm_b
+
+test result: [31mFAILED(B[m. 89 passed; 2 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.70s
+
+
+test tests::refpow_protection ... [31mFAILED(B[m
+
+failures:
+
+---- tests::refpow_protection stdout ----
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 1011111110110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::refpow_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:779:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+failures:
+    tests::refpow_protection
+
+test result: [31mFAILED(B[m. 89 passed; 2 failed; 7 ignored; 0 measured; 87 filtered out; finished in 144.18s
+
+
+test tests::adc_reflectedpower_alarm_a ... [31mFAILED(B[m
+test tests::refpow_protection ... [31mFAILED(B[m
+
+failures:
+
+---- tests::adc_reflectedpower_alarm_a stdout ----
+Measured level = 1014, Dac value = 1023, Threshole level = 700, Triggered if higher
+thread 'tests::adc_reflectedpower_alarm_a' panicked at 'assertion failed: `(left == right)`
+  left: `0`,
+ right: `64`', src/lib.rs:184:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::refpow_protection stdout ----
+Status: 1100000000110000 (pre)
+sspa_active: 0x4000, alarm_val: 0x00 (pre)
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+Status: 1011111110110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::refpow_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:779:9
+
+failures:
+    tests::adc_reflectedpower_alarm_a
+    tests::refpow_protection
+
+test result: [31mFAILED(B[m. 88 passed; 3 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.86s
+
+
+test tests::adc_reflectedpower_alarm_a ... [31mFAILED(B[m
+test tests::overdrive_no_protection ... [31mFAILED(B[m
+
+failures:
+
+---- tests::adc_reflectedpower_alarm_a stdout ----
+Measured level = 1015, Dac value = 1023, Threshole level = 700, Triggered if higher
+thread 'tests::adc_reflectedpower_alarm_a' panicked at 'assertion failed: `(left == right)`
+  left: `0`,
+ right: `64`', src/lib.rs:184:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::overdrive_no_protection stdout ----
+Status: 1000000000111000 (pre)
+sspa_active: 0x00, alarm_val: 0x08 (pre)
+Measured level = 0, Dac value = 0, Threshole level = 700, Triggered if higher
+Status: 0000000000110000
+sspa_active: 0x00, alarm_val: 0x00
+thread 'tests::overdrive_no_protection' panicked at 'assertion failed: `(left != right)`
+  left: `0`,
+ right: `0`', src/lib.rs:846:9
+
+failures:
+    tests::adc_reflectedpower_alarm_a
+    tests::overdrive_no_protection
+
+test result: [31mFAILED(B[m. 88 passed; 3 failed; 7 ignored; 0 measured; 87 filtered out; finished in 143.73s
+

@@ -2,12 +2,12 @@
 mod tests {
 
     const WAIT_MILLIS: u64 = 100;
-    const WAIT_CLEAR: u64 = 1000;
-    const WAIT_DAC: u64 = 1500;
-    const WAIT_RELAY: u64 = 1000;
-    const WAIT_RESET: u64 = 2000;
-    const WAIT_SSPA_RESET: u64 = 2000;
-    const WAIT_TNR: u64 = 5000;
+    const WAIT_CLEAR: u64 = 300;
+    const WAIT_DAC: u64 = 500;
+    const WAIT_RELAY: u64 = 500;
+    const WAIT_RESET: u64 = 200;
+    const WAIT_SSPA_RESET: u64 = 200;
+    const WAIT_TNR: u64 = 1000;
     const THRESHOLE_HIGH: u32 = 700;
     const THRESHOLE_LOW: u32 = 300;
 
@@ -722,6 +722,8 @@ mod tests {
     #[allow(unused)]
     fn disable_protection_core(reg: usize, dac_val: u32) -> (u16, u16){
         let trg_if = "higher";
+        sspa_reset();
+        sleep(Duration::from_millis(WAIT_SSPA_RESET));
         dac_clear();
         powen_on();
         sleep(Duration::from_millis(WAIT_CLEAR));
@@ -752,6 +754,7 @@ mod tests {
         sleep(Duration::from_millis(WAIT_DAC));
         alarm_reset();
         sspa_reset();
+        sleep(Duration::from_millis(WAIT_SSPA_RESET));
         (sspa_active, alarm_val)
     }
 
@@ -1823,6 +1826,7 @@ mod tests {
         alarm_reset();
         let mut cont = 0;
         tnr_set(800, 800, 0, 0, 0);
+        sleep(Duration::from_millis(WAIT_MILLIS));
         for _ in 0..5 {
             sleep(Duration::from_millis(WAIT_TNR/5));
             cont += enviar(0x4D010000);
@@ -1853,6 +1857,7 @@ mod tests {
         alarm_reset();
         let mut cont = 0;
         tnr_set(800, 800, 0, 0, 0);
+        sleep(Duration::from_millis(WAIT_MILLIS));
         for _ in 0..5 {
             sleep(Duration::from_millis(WAIT_TNR/5));
             cont += enviar(0x4D010000);
