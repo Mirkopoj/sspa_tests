@@ -80,7 +80,7 @@ gen_tnr(800, 800, 0, 0, 0)
 store_to_non_volatile()
 load_from_non_volatile()
 
-offset(1,0)
+offset(1,800)
 offset(2,0)
 offset(3,0)
 offset(4,0)

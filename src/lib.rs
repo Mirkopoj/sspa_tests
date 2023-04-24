@@ -171,12 +171,16 @@ mod tests {
         sleep(Duration::from_millis(WAIT_DAC));
         alarm_reset();
         sleep(Duration::from_millis(WAIT_RESET));
+        if enviar(0x3C000000+(REG_TAB[reg].value<<16))&0x7FFF == 0 {
+            sleep(Duration::from_millis(WAIT_RESET));
+        }
         let measured_voltage = enviar(0x3C000000+(REG_TAB[reg].value<<16))&0x7FFF;
         println!("Measured level = {}, Dac value = {}, Threshole level = {}, Triggered if {}",
                  measured_voltage,
                  dac_val,
                  trh_val,
                  trg_if);
+        sleep(Duration::from_millis(WAIT_MILLIS));
         let ret_val = enviar(0x3C000000)&REG_TAB[reg].alarma;
         alarm_reset();
         dac_clear();
@@ -199,6 +203,8 @@ mod tests {
         sleep(Duration::from_millis(WAIT_DAC));
         alarm_reset();
         sleep(Duration::from_millis(WAIT_RESET));
+        let trh_val = (enviar(0x3C000000+(REG_TAB[reg].trh<<16))&0x7FFF).clamp(0, 1023) as u32;
+        sleep(Duration::from_millis(WAIT_MILLIS));
         let measured_voltage = enviar(0x3C000000+(REG_TAB[reg].value<<16))&0x7FFF;
         println!("Measured level = {}, Dac value = {}, Threshole level = {}, Triggered if {}",
                  measured_voltage,
@@ -221,6 +227,8 @@ mod tests {
         sleep(Duration::from_millis(WAIT_DAC));
         alarm_reset();
         sleep(Duration::from_millis(WAIT_RESET));
+        let _ = enviar(0x3C000000+(REG_TAB[reg].value<<16))&0x7FFF;
+        sleep(Duration::from_millis(WAIT_MILLIS));
         let measured_voltage = enviar(0x3C000000+(REG_TAB[reg].value<<16))&0x7FFF;
         println!("Measured level = {}, Dac value = {}, Threshole level = {}, Triggered if {}",
                  measured_voltage,
@@ -722,11 +730,12 @@ mod tests {
     #[allow(unused)]
     fn disable_protection_core(reg: usize, dac_val: u32) -> (u16, u16){
         let trg_if = "higher";
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
         sspa_reset();
         sleep(Duration::from_millis(WAIT_SSPA_RESET));
-        dac_clear();
         powen_on();
-        sleep(Duration::from_millis(WAIT_CLEAR));
+        sleep(Duration::from_millis(WAIT_MILLIS));
         let status_reg = enviar(0x3C000000);
         let alarm_val = status_reg&REG_TAB[reg].alarma;
         let sspa_active = status_reg&0x4000;
@@ -738,6 +747,8 @@ mod tests {
         sleep(Duration::from_millis(WAIT_DAC));
         alarm_reset();
         sleep(Duration::from_millis(WAIT_RESET));
+        let measured_voltage = enviar(0x3C000000+(REG_TAB[reg].value<<16))&0x7FFF;
+        sleep(Duration::from_millis(WAIT_MILLIS));
         let measured_voltage = enviar(0x3C000000+(REG_TAB[reg].value<<16))&0x7FFF;
         println!("Measured level = {}, Dac value = {}, Threshole level = {}, Triggered if {}",
                  measured_voltage,
@@ -753,6 +764,7 @@ mod tests {
         powen_off();
         sleep(Duration::from_millis(WAIT_DAC));
         alarm_reset();
+        sleep(Duration::from_millis(WAIT_RESET));
         sspa_reset();
         sleep(Duration::from_millis(WAIT_SSPA_RESET));
         (sspa_active, alarm_val)
@@ -1901,7 +1913,7 @@ mod tests {
     }
 
     #[test]
-    fn refpow_offset_calmp_min(){
+    fn refpow_offset_clamp_min(){
         let reg = 1;
         let offset = -100;
         initial_conection();
@@ -1915,7 +1927,24 @@ mod tests {
     }
 
     #[test]
-    fn refpow_offset_calmp_max(){
+    fn refpow_offset_clamp_min_dac(){
+        let reg = 1;
+        let offset = -600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000190+(REG_TAB[reg].dac<<16));
+        sleep(Duration::from_millis(WAIT_DAC));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 400);
+    }
+
+    #[test]
+    fn refpow_offset_clamp_max(){
         let reg = 1;
         let offset = 2000;
         initial_conection();
@@ -1926,6 +1955,23 @@ mod tests {
         offset_clear(reg);
         assert_eq!(adc, 1023);
         assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn refpow_offset_clamp_max_dac(){
+        let reg = 1;
+        let offset = 600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000258+(REG_TAB[reg].dac<<16));
+        sleep(Duration::from_millis(WAIT_DAC));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 600);
     }
 
     #[test]
@@ -1945,7 +1991,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_refpow_offset_calmp_min(){
+    fn fresh_boot_refpow_offset_clamp_min(){
         let reg = 1;
         let offset = -100;
         initial_conection();
@@ -1961,7 +2007,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_refpow_offset_calmp_max(){
+    fn fresh_boot_refpow_offset_clamp_max(){
         let reg = 1;
         let offset = 2000;
         initial_conection();
@@ -1991,7 +2037,7 @@ mod tests {
     }
 
     #[test]
-    fn inputpow_offset_calmp_min(){
+    fn inputpow_offset_clamp_min(){
         let reg = 2;
         let offset = -100;
         initial_conection();
@@ -2005,7 +2051,23 @@ mod tests {
     }
 
     #[test]
-    fn inputpow_offset_calmp_max(){
+    fn inputpow_offset_clamp_min_dac(){
+        let reg = 2;
+        let offset = -600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000190+(REG_TAB[reg].dac<<16));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 400);
+    }
+
+    #[test]
+    fn inputpow_offset_clamp_max(){
         let reg = 2;
         let offset = 2000;
         initial_conection();
@@ -2016,6 +2078,23 @@ mod tests {
         offset_clear(reg);
         assert_eq!(adc, 1023);
         assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn inputpow_offset_clamp_max_dac(){
+        let reg = 2;
+        let offset = 600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000258+(REG_TAB[reg].dac<<16));
+        sleep(Duration::from_millis(WAIT_DAC));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 600);
     }
 
     #[test]
@@ -2035,7 +2114,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_inputpow_offset_calmp_min(){
+    fn fresh_boot_inputpow_offset_clamp_min(){
         let reg = 2;
         let offset = -100;
         initial_conection();
@@ -2051,7 +2130,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_inputpow_offset_calmp_max(){
+    fn fresh_boot_inputpow_offset_clamp_max(){
         let reg = 2;
         let offset = 2000;
         initial_conection();
@@ -2081,7 +2160,7 @@ mod tests {
     }
 
     #[test]
-    fn outputpow_offset_calmp_min(){
+    fn outputpow_offset_clamp_min(){
         let reg = 0;
         let offset = -100;
         initial_conection();
@@ -2095,7 +2174,23 @@ mod tests {
     }
 
     #[test]
-    fn outputpow_offset_calmp_max(){
+    fn outputpow_offset_clamp_min_dac(){
+        let reg = 0;
+        let offset = -600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000190+(REG_TAB[reg].dac<<16));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 400);
+    }
+
+    #[test]
+    fn outputpow_offset_clamp_max(){
         let reg = 0;
         let offset = 2000;
         initial_conection();
@@ -2106,6 +2201,23 @@ mod tests {
         offset_clear(reg);
         assert_eq!(adc, 1023);
         assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn outputpow_offset_clamp_max_dac(){
+        let reg = 0;
+        let offset = 600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000258+(REG_TAB[reg].dac<<16));
+        sleep(Duration::from_millis(WAIT_DAC));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 600);
     }
 
     #[test]
@@ -2125,7 +2237,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_outputpow_offset_calmp_min(){
+    fn fresh_boot_outputpow_offset_clamp_min(){
         let reg = 0;
         let offset = -100;
         initial_conection();
@@ -2141,7 +2253,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_outputpow_offset_calmp_max(){
+    fn fresh_boot_outputpow_offset_clamp_max(){
         let reg = 0;
         let offset = 2000;
         initial_conection();
@@ -2171,7 +2283,7 @@ mod tests {
     }
 
     #[test]
-    fn gan1curr_offset_calmp_min(){
+    fn gan1curr_offset_clamp_min(){
         let reg = 5;
         let offset = -100;
         initial_conection();
@@ -2185,7 +2297,23 @@ mod tests {
     }
 
     #[test]
-    fn gan1curr_offset_calmp_max(){
+    fn gan1curr_offset_clamp_min_dac(){
+        let reg = 5;
+        let offset = -600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000190+(REG_TAB[reg].dac<<16));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 400);
+    }
+
+    #[test]
+    fn gan1curr_offset_clamp_max(){
         let reg = 5;
         let offset = 2000;
         initial_conection();
@@ -2196,6 +2324,23 @@ mod tests {
         offset_clear(reg);
         assert_eq!(adc, 1023);
         assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan1curr_offset_clamp_max_dac(){
+        let reg = 5;
+        let offset = 600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000258+(REG_TAB[reg].dac<<16));
+        sleep(Duration::from_millis(WAIT_DAC));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 600);
     }
 
     #[test]
@@ -2215,7 +2360,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_gan1curr_offset_calmp_min(){
+    fn fresh_boot_gan1curr_offset_clamp_min(){
         let reg = 5;
         let offset = -100;
         initial_conection();
@@ -2231,7 +2376,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_gan1curr_offset_calmp_max(){
+    fn fresh_boot_gan1curr_offset_clamp_max(){
         let reg = 5;
         let offset = 2000;
         initial_conection();
@@ -2261,7 +2406,7 @@ mod tests {
     }
 
     #[test]
-    fn gan2curr_offset_calmp_min(){
+    fn gan2curr_offset_clamp_min(){
         let reg = 6;
         let offset = -100;
         initial_conection();
@@ -2275,7 +2420,23 @@ mod tests {
     }
 
     #[test]
-    fn gan2curr_offset_calmp_max(){
+    fn gan2curr_offset_clamp_min_dac(){
+        let reg = 6;
+        let offset = -600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000190+(REG_TAB[reg].dac<<16));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 400);
+    }
+
+    #[test]
+    fn gan2curr_offset_clamp_max(){
         let reg = 6;
         let offset = 2000;
         initial_conection();
@@ -2286,6 +2447,23 @@ mod tests {
         offset_clear(reg);
         assert_eq!(adc, 1023);
         assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan2curr_offset_clamp_max_dac(){
+        let reg = 6;
+        let offset = 600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000258+(REG_TAB[reg].dac<<16));
+        sleep(Duration::from_millis(WAIT_DAC));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 600);
     }
 
     #[test]
@@ -2305,7 +2483,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_gan2curr_offset_calmp_min(){
+    fn fresh_boot_gan2curr_offset_clamp_min(){
         let reg = 6;
         let offset = -100;
         initial_conection();
@@ -2321,7 +2499,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_gan2curr_offset_calmp_max(){
+    fn fresh_boot_gan2curr_offset_clamp_max(){
         let reg = 6;
         let offset = 2000;
         initial_conection();
@@ -2351,7 +2529,7 @@ mod tests {
     }
 
     #[test]
-    fn gan3curr_offset_calmp_min(){
+    fn gan3curr_offset_clamp_min(){
         let reg = 7;
         let offset = -100;
         initial_conection();
@@ -2365,7 +2543,23 @@ mod tests {
     }
 
     #[test]
-    fn gan3curr_offset_calmp_max(){
+    fn gan3curr_offset_clamp_min_dac(){
+        let reg = 7;
+        let offset = -600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000190+(REG_TAB[reg].dac<<16));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 400);
+    }
+
+    #[test]
+    fn gan3curr_offset_clamp_max(){
         let reg = 7;
         let offset = 2000;
         initial_conection();
@@ -2376,6 +2570,23 @@ mod tests {
         offset_clear(reg);
         assert_eq!(adc, 1023);
         assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan3curr_offset_clamp_max_dac(){
+        let reg = 7;
+        let offset = 600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000258+(REG_TAB[reg].dac<<16));
+        sleep(Duration::from_millis(WAIT_DAC));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 600);
     }
 
     #[test]
@@ -2395,7 +2606,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_gan3curr_offset_calmp_min(){
+    fn fresh_boot_gan3curr_offset_clamp_min(){
         let reg = 7;
         let offset = -100;
         initial_conection();
@@ -2411,7 +2622,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_gan3curr_offset_calmp_max(){
+    fn fresh_boot_gan3curr_offset_clamp_max(){
         let reg = 7;
         let offset = 2000;
         initial_conection();
@@ -2441,7 +2652,7 @@ mod tests {
     }
 
     #[test]
-    fn gan4curr_offset_calmp_min(){
+    fn gan4curr_offset_clamp_min(){
         let reg = 8;
         let offset = -100;
         initial_conection();
@@ -2455,7 +2666,23 @@ mod tests {
     }
 
     #[test]
-    fn gan4curr_offset_calmp_max(){
+    fn gan4curr_offset_clamp_min_dac(){
+        let reg = 8;
+        let offset = -600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000190+(REG_TAB[reg].dac<<16));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 400);
+    }
+
+    #[test]
+    fn gan4curr_offset_clamp_max(){
         let reg = 8;
         let offset = 2000;
         initial_conection();
@@ -2466,6 +2693,23 @@ mod tests {
         offset_clear(reg);
         assert_eq!(adc, 1023);
         assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn gan4curr_offset_clamp_max_dac(){
+        let reg = 8;
+        let offset = 600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000258+(REG_TAB[reg].dac<<16));
+        sleep(Duration::from_millis(WAIT_DAC));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 600);
     }
 
     #[test]
@@ -2485,7 +2729,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_gan4curr_offset_calmp_min(){
+    fn fresh_boot_gan4curr_offset_clamp_min(){
         let reg = 8;
         let offset = -100;
         initial_conection();
@@ -2501,7 +2745,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_gan4curr_offset_calmp_max(){
+    fn fresh_boot_gan4curr_offset_clamp_max(){
         let reg = 8;
         let offset = 2000;
         initial_conection();
@@ -2531,7 +2775,7 @@ mod tests {
     }
 
     #[test]
-    fn temp_offset_calmp_min(){
+    fn temp_offset_clamp_min(){
         let reg = 4;
         let offset = -100;
         initial_conection();
@@ -2545,7 +2789,23 @@ mod tests {
     }
 
     #[test]
-    fn temp_offset_calmp_max(){
+    fn temp_offset_clamp_min_dac(){
+        let reg = 4;
+        let offset = -600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000190+(REG_TAB[reg].dac<<16));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 0);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 400);
+    }
+
+    #[test]
+    fn temp_offset_clamp_max(){
         let reg = 4;
         let offset = 2000;
         initial_conection();
@@ -2556,6 +2816,23 @@ mod tests {
         offset_clear(reg);
         assert_eq!(adc, 1023);
         assert_eq!(ret, offset);
+    }
+
+    #[test]
+    fn temp_offset_clamp_max_dac(){
+        let reg = 4;
+        let offset = 600;
+        initial_conection();
+        dac_clear();
+        sleep(Duration::from_millis(WAIT_CLEAR));
+        let dac = enviar(0x2A000258+(REG_TAB[reg].dac<<16));
+        sleep(Duration::from_millis(WAIT_DAC));
+        let (ret, adc) = registro_fantasma_offset_core(reg, offset);
+        let offset = (offset & 0x7FFF) as u16;
+        offset_clear(reg);
+        assert_eq!(adc, 1023);
+        assert_eq!(ret, offset);
+        assert_eq!(dac, 600);
     }
 
     #[test]
@@ -2575,7 +2852,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_temp_offset_calmp_min(){
+    fn fresh_boot_temp_offset_clamp_min(){
         let reg = 4;
         let offset = -100;
         initial_conection();
@@ -2591,7 +2868,7 @@ mod tests {
     }
 
     #[test]
-    fn fresh_boot_temp_offset_calmp_max(){
+    fn fresh_boot_temp_offset_clamp_max(){
         let reg = 4;
         let offset = 2000;
         initial_conection();
